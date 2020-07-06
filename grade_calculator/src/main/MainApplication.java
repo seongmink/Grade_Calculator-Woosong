@@ -1,10 +1,11 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.DecimalFormat;
 
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -37,69 +38,73 @@ public class MainApplication {
 			FileInputStream fr = new FileInputStream(br.readLine());
 			HSSFWorkbook workbook = new HSSFWorkbook(fr);
 			HSSFSheet sheet = workbook.getSheetAt(0);
-			int rows = sheet.getPhysicalNumberOfRows();
-			
-			for (int rowIdx = 0; rowIdx < 1; rowIdx++) {
-				
-				HSSFRow row = sheet.getRow(rowIdx);
-				int cells = row.getPhysicalNumberOfCells();
-				for (int colIdx = 0; colIdx < cells; colIdx++) {
-					if(row.getCell(colIdx).toString().equals("이수구분")) {
-						courseIdx = colIdx;
-					}
-					if(row.getCell(colIdx).toString().equals("학점")) {
-						creditIdx = colIdx;
-					}
-					if(row.getCell(colIdx).toString().equals("등급")) {
-						gradeIdx = colIdx;
-					}
-				}
-			}
 
-			for (int rowIdx = 1; rowIdx < rows; rowIdx++) {
-				
-				HSSFRow row = sheet.getRow(rowIdx);
-				String course = row.getCell(courseIdx).toString();
-				int credit = Integer.parseInt(String.valueOf(row.getCell(creditIdx)));
-				String grade = String.valueOf(row.getCell(gradeIdx));
-				
-				if(grade.equals("F"))
-					continue;
-				
-				if(course.equals("전필") || course.equals("전선")) {
-					if(grade.equals("P")) {
-						majorPassCredit += credit;
-					} else {
-						majorCredit += credit;
-						majorGrade += (gradeCalc(grade) * credit);
-					}
-				} else if(course.equals("부전")) {
-					if(grade.equals("P")) {
-						subMajorPassCredit += credit;
-					} else {
-						subMajorCredit += credit;
-						subMajorGrade += (gradeCalc(grade) * credit);
-					}
-				} else {
-					if(grade.equals("P")) {
-						normalPassCredit += credit;
-					} else {
-						normalCredit += credit;
-						normalGrade += (gradeCalc(grade) * credit);
-					}
-				}
-			}
-
-			makeResult();
+			init(sheet);
+			calc(sheet);
+			printResult();
 			
+			br.close();
 			workbook.close();
-			
 		} catch (IOException e) {
 			System.out.println(e);
 		}
 	}
 	
-	public static void makeResult() {
+	public static void init(HSSFSheet sheet) {
+		for (int rowIdx = 0; rowIdx < 1; rowIdx++) {
+			HSSFRow row = sheet.getRow(rowIdx);
+			int cells = row.getPhysicalNumberOfCells();
+			for (int colIdx = 0; colIdx < cells; colIdx++) {
+				if(row.getCell(colIdx).toString().equals("이수구분")) {
+					courseIdx = colIdx;
+				}
+				if(row.getCell(colIdx).toString().equals("학점")) {
+					creditIdx = colIdx;
+				}
+				if(row.getCell(colIdx).toString().equals("등급")) {
+					gradeIdx = colIdx;
+				}
+			}
+		}
+	}
+	
+	public static void calc(HSSFSheet sheet) {
+		int rows = sheet.getPhysicalNumberOfRows();
+		for (int rowIdx = 1; rowIdx < rows; rowIdx++) {
+			HSSFRow row = sheet.getRow(rowIdx);
+			String course = row.getCell(courseIdx).toString();
+			int credit = Integer.parseInt(String.valueOf(row.getCell(creditIdx)));
+			String grade = String.valueOf(row.getCell(gradeIdx));
+			
+			if(grade.equals("F"))
+				continue;
+			
+			if(course.equals("전필") || course.equals("전선")) {
+				if(grade.equals("P")) {
+					majorPassCredit += credit;
+				} else {
+					majorCredit += credit;
+					majorGrade += (gradeCalc(grade) * credit);
+				}
+			} else if(course.equals("부전")) {
+				if(grade.equals("P")) {
+					subMajorPassCredit += credit;
+				} else {
+					subMajorCredit += credit;
+					subMajorGrade += (gradeCalc(grade) * credit);
+				}
+			} else {
+				if(grade.equals("P")) {
+					normalPassCredit += credit;
+				} else {
+					normalCredit += credit;
+					normalGrade += (gradeCalc(grade) * credit);
+				}
+			}
+		}
+	}
+	
+	public static void printResult() {
 		
 		StringBuilder sb = new StringBuilder();
 		
@@ -113,25 +118,37 @@ public class MainApplication {
 		int totalPassCredit = majorPassCredit + subMajorPassCredit + normalPassCredit;
 		double totalGrade = majorGrade + subMajorGrade + normalGrade;
 		
-		sb.append("계산한 결과는 다음과 같습니다.(소수점 세번째 자리에서 반올림)\n");
+		sb.append("계산한 결과는 다음과 같습니다.(소수점 세번째 자리에서 반올림)\n\n");
 		sb.append("전공 취득 학점 : ").append(totalMajorCredit + "학점\n");
 		sb.append("전공 평균 학점 : ").append(totalMajorGrade + "\n");
 		sb.append("부전 취득 학점 : ").append(totalSubMajorCredit + "학점\n");
 		sb.append("부전 평균 학점 : ").append(totalSubMajorGrade + "\n");
 		sb.append("교양 및 일선 취득 학점 : ").append(totalNormalCredit + "학점\n");
 		sb.append("교양 및 일선 평균 학점 : ").append(totalNormalGrade + "\n");
-		sb.append("총 취득 학점 : ").append(totalCredit + totalPassCredit + "학점\n");
-		sb.append("총 평균 학점 : ").append(Math.round((totalGrade / totalCredit) * 100) / 100.0 + "\n");
-		
-		sb.append("-------------------------------------------\n");
-		sb.append("전공 취득 학점 : ").append(totalMajorCredit + "학점\n");
-		sb.append("전공 평균 학점 : ").append(totalMajorGrade + "\n");
-		sb.append("나머지 취득 학점 : ").append(totalSubMajorCredit + totalNormalCredit + "\n");
-		sb.append("나머지 평균 학점 : ").append(Math.round(totalGrade - majorGrade) / (totalCredit - majorCredit) * 100 / 100.0 +"\n");
+		sb.append("전공을 제외한 취득 학점 : ").append(totalSubMajorCredit + totalNormalCredit + "\n");
+		sb.append("전공을 제외한 평균 학점 : ").append(Math.round(totalGrade - majorGrade) / (totalCredit - majorCredit) * 100 / 100.0 +"\n");
 		sb.append("총 취득 학점 : ").append(totalCredit + totalPassCredit + "학점\n");
 		sb.append("총 평균 학점 : ").append(Math.round((totalGrade / totalCredit) * 100) / 100.0 + "\n");
 		
 		System.out.println(sb.toString());
+		
+		makeResult(sb);
+	}
+	
+	public static void makeResult(StringBuilder sb) {
+		
+		try {
+			String filePath = "C:\\Users\\KSM\\Desktop\\";
+			String fileName = "내 학점 결과.txt";
+			BufferedWriter bw = new BufferedWriter(new FileWriter(filePath + fileName, true));
+			
+			bw.write(sb.toString());
+			bw.close();
+			System.out.println("결과 파일이 정상적으로 생성되었습니다.");
+			System.out.println("위치 > " + filePath + fileName);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 	}
 	
 	public static double gradeCalc(String grade) {
