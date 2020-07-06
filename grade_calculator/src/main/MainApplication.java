@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -88,16 +89,49 @@ public class MainApplication {
 					}
 				}
 			}
-			
-			System.out.println(majorCredit + " " + majorGrade + " " + majorPassCredit);
-			System.out.println(subMajorCredit + " " + subMajorGrade + " " + subMajorPassCredit);
-			System.out.println(normalCredit + " " + normalGrade + " " + normalPassCredit);
+
+			makeResult();
 			
 			workbook.close();
 			
 		} catch (IOException e) {
 			System.out.println(e);
 		}
+	}
+	
+	public static void makeResult() {
+		
+		StringBuilder sb = new StringBuilder();
+		
+		int totalMajorCredit = majorCredit + majorPassCredit;
+		double totalMajorGrade = Math.round((majorGrade / majorCredit) * 100) / 100.0;
+		int totalSubMajorCredit = subMajorCredit + subMajorPassCredit;
+		double totalSubMajorGrade = Math.round((subMajorGrade / subMajorCredit) * 100) / 100.0;
+		int totalNormalCredit = normalCredit + normalPassCredit;
+		double totalNormalGrade = Math.round((normalGrade / normalCredit) * 100) / 100.0;
+		int totalCredit = majorCredit + subMajorCredit + normalCredit;
+		int totalPassCredit = majorPassCredit + subMajorPassCredit + normalPassCredit;
+		double totalGrade = majorGrade + subMajorGrade + normalGrade;
+		
+		sb.append("계산한 결과는 다음과 같습니다.(소수점 세번째 자리에서 반올림)\n");
+		sb.append("전공 취득 학점 : ").append(totalMajorCredit + "학점\n");
+		sb.append("전공 평균 학점 : ").append(totalMajorGrade + "\n");
+		sb.append("부전 취득 학점 : ").append(totalSubMajorCredit + "학점\n");
+		sb.append("부전 평균 학점 : ").append(totalSubMajorGrade + "\n");
+		sb.append("교양 및 일선 취득 학점 : ").append(totalNormalCredit + "학점\n");
+		sb.append("교양 및 일선 평균 학점 : ").append(totalNormalGrade + "\n");
+		sb.append("총 취득 학점 : ").append(totalCredit + totalPassCredit + "학점\n");
+		sb.append("총 평균 학점 : ").append(Math.round((totalGrade / totalCredit) * 100) / 100.0 + "\n");
+		
+		sb.append("-------------------------------------------\n");
+		sb.append("전공 취득 학점 : ").append(totalMajorCredit + "학점\n");
+		sb.append("전공 평균 학점 : ").append(totalMajorGrade + "\n");
+		sb.append("나머지 취득 학점 : ").append(totalSubMajorCredit + totalNormalCredit + "\n");
+		sb.append("나머지 평균 학점 : ").append(Math.round(totalGrade - majorGrade) / (totalCredit - majorCredit) * 100 / 100.0 +"\n");
+		sb.append("총 취득 학점 : ").append(totalCredit + totalPassCredit + "학점\n");
+		sb.append("총 평균 학점 : ").append(Math.round((totalGrade / totalCredit) * 100) / 100.0 + "\n");
+		
+		System.out.println(sb.toString());
 	}
 	
 	public static double gradeCalc(String grade) {
